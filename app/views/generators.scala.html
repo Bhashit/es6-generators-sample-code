@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Generators can be awesome</title>
+<head>
+<body>
+  <script
+    src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="https://www.promisejs.org/polyfills/promise-4.0.0.js"></script>
+  <script src="@routes.Assets.at("javascripts/async.js")"></script>
+  <script>
+		$(function() {
+			$.ajax({
+				url: "/request1"
+			}).done(function(data) {
+				console.log(data.slice(0, 100));
+			});
+			$.when( $.ajax("/request1"), $.ajax("/request2")).done(function(a1, a2) {
+				// Each argument is an array with the following structure: [ data, statusText, jqXHR ]
+				var data = a1[0] + a2[0];
+				console.log(data)
+			});
+
+			var failureCallback = function() {
+				// Check which request failed and do cleanup here.
+				// You might need the XHR objects to be in scope.
+				console.log("One of the ajax calls failed");
+			};
+
+			var successCallback = function(a1, a2) {
+				console.log(a1[0] + a2[0]);
+			};
+ 			$.when($.ajax("/request1"), $.ajax("/request2")).then(successCallback, failureCallback);
+
+ 			$.ajax("/request1").then(function(data1) {
+				console.log("Request 1 done");
+				$.ajax("/request2").then(function(data2) {
+					console.log("Request 2 done");
+				}, function() {
+					// handle request 2 failure
+				});
+			}, function() {
+				// handle request 1 failure
+			});
+
+			async(function *() {
+				try {
+					// With jQuery, the XHR objects returned by the $.ajax method calls are
+					// somewhat like a Promise object (they have the then() method, which is all
+				 	// we require for this code. If you want a full Promise implementation with
+				 	// jQuery, you can call promise() on any jQuery object.)
+					var resultPromise1 = $.ajax("/request1");
+					//var resultPromise2 = $.ajax("/request2");
+					//var resultPromise3 = $.ajax("/request3");
+					var results = {"result1": yield resultPromise1};
+					console.log(results);
+				} catch(xhr) {
+					console.log("Error: " + xhr);
+				}
+			});
+
+			console.log("Should be printed immediately...");
+ 		});
+    </script>
+</body>
+</html>
